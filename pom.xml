@@ -16,6 +16,7 @@
 
 
     <modules>
+        <module>mall-third-service</module>
         <module>mall-product</module>
         <module>mall-coupon</module>
         <module>mall-member</module>

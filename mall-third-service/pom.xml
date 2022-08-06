@@ -3,10 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.caq.mall</groupId>
-    <artifactId>mall-product</artifactId>
+    <artifactId>mall-third-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>mall-product</name>
-    <description>Demo project for Spring Boot</description>
+    <name>mall-third-service</name>
+    <description>第三方技术的整合</description>
 
     <properties>
         <java.version>1.8</java.version>
@@ -21,14 +21,21 @@
             <groupId>com.caq.mall</groupId>
             <artifactId>mall-common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.baomidou</groupId>
+                    <artifactId>mybatis-plus-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-alicloud-oss</artifactId>
+            <version>2.1.1.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -79,7 +86,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.3.7.RELEASE</version>
                 <configuration>
-                    <mainClass>com.caq.mall.product.MallProductApplication</mainClass>
+                    <mainClass>com.caq.mall.thirdservice.MallThirdServiceApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>

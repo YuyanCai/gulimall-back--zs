@@ -1,0 +1,14 @@
+#用来指定配置中心地址
+spring:
+  application:
+    name: mall-third-service
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: 2bbd2076-36c8-44b2-9c2e-17ce5406afb7
+        file-extension: yaml
+        extension-configs:
+          - data-id: mall-third-service.yml
+            group: DEFAULT_GROUP
+            refresh: true

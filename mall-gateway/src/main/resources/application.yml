@@ -16,12 +16,12 @@ spring:
           filters:
             - RewritePath= /api/(?<segment>.*),/$\{segment}
 
-        - id: third_party_route
-          uri: lb://mall-third-party
+        - id: mall-third-service
+          uri: lb://mall-third-service
           predicates:
-            - Path=/api/thirdparty/**
+            - Path=/api/thirdservice/**
           filters:
-            - RewritePath= /api/thirdparty/(?<segment>.*),/$\{segment}
+            - RewritePath= /api/thirdservice/(?<segment>.*),/$\{segment}
 
         - id: member_route
           uri: lb://mall-member

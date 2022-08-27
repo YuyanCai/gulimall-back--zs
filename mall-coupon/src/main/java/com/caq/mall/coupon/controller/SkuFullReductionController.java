@@ -3,12 +3,9 @@ package com.caq.mall.coupon.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.caq.common.to.SkuReductionTo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.caq.mall.coupon.entity.SkuFullReductionEntity;
 import com.caq.mall.coupon.service.SkuFullReductionService;
@@ -29,6 +26,13 @@ import com.caq.common.utils.R;
 public class SkuFullReductionController {
     @Autowired
     private SkuFullReductionService skuFullReductionService;
+
+//    skuReductionTo
+    @PostMapping("/saveinfo")
+    public R saveinfo(@RequestBody SkuReductionTo reductionTo){
+        skuFullReductionService.saveSkuReduction(reductionTo);
+        return R.ok();
+    }
 
     /**
      * 列表

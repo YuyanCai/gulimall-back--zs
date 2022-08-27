@@ -13,5 +13,15 @@
         <result property="stockLocked" column="stock_locked"/>
     </resultMap>
 
+    <update id="addStock">
+        UPDATE `wms_ware_sku` SET stock = stock + #{skuNum} WHERE sku_id = #{skuId} and ware_id = #{wareId}
+    </update>
+
+    <select id="getSkuStock" resultType="java.lang.Long">
+        SELECT SUM(stock - IFNULL(stock_locked,0)) FROM `wms_ware_sku` WHERE sku_id=#{skuId}
+    </select>
+
+
+
 
 </mapper>

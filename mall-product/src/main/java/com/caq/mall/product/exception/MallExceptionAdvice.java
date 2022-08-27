@@ -35,7 +35,7 @@ public class MallExceptionAdvice {
 
     @ExceptionHandler(value = Throwable.class)
     public R handleException(Throwable throwable){
-        log.error("未知异常{},异常类型{}",throwable.getMessage(),throwable.getClass());
+        log.error("错误", throwable);
         return R.error(BizCodeEnum.UNKNOW_EXEPTION.getCode(),BizCodeEnum.UNKNOW_EXEPTION.getMsg());
     }
 }

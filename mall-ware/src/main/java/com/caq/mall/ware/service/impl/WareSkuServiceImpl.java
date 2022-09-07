@@ -1,12 +1,22 @@
 package com.caq.mall.ware.service.impl;
 
+import com.caq.common.to.SkuHasStockVo;
+import com.caq.common.utils.R;
+import com.caq.mall.ware.entity.WareOrderTaskDetailEntity;
+import com.caq.mall.ware.entity.WareOrderTaskEntity;
+import com.caq.mall.ware.feign.ProductFeignService;
 import com.caq.mall.ware.service.WareOrderTaskDetailService;
 import com.caq.mall.ware.service.WareOrderTaskService;
+import com.caq.mall.ware.vo.OrderItemVo;
+import com.caq.mall.ware.vo.WareSkuLockVo;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -35,6 +45,10 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
     @Autowired
     WareOrderTaskService wareOrderTaskService;
 
+    @Autowired
+    ProductFeignService productFeignService;
+
+    //多条件分页查询
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
         QueryWrapper<WareSkuEntity> queryWrapper = new QueryWrapper<>();
@@ -63,11 +77,37 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
             wareSkuEntity.setSkuId(skuId);
             wareSkuEntity.setStock(skuNum);
             wareSkuEntity.setWareId(wareId);
+            wareSkuEntity.setStockLocked(0);
+            //TODO 远程查询sku的名字
+            //如果查询名字查询失败了，事务回滚有点不值得，所以用trycatch来捕捉一下
+            try {
+                R info = productFeignService.info(skuId);
+                Map<String,Object> skuInfo = (Map<String, Object>) info.get("skuInfo");
+                if (info.getCode() == 0){
+                    wareSkuEntity.setSkuName((String) skuInfo.get("skuName"));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             wareSkuDao.insert(wareSkuEntity);
         } else {
             wareSkuDao.addStock(skuId, wareId, skuNum);
         }
     }
 
+    @Override
+    public List<SkuHasStockVo> getSkuHasStock(List<Long> skuIds) {
+        List<SkuHasStockVo> skuHasStockVos = skuIds.stream().map(item -> {
+            Long count = this.baseMapper.getSkuStock(item);
+            SkuHasStockVo skuHasStockVo = new SkuHasStockVo();
+            skuHasStockVo.setSkuId(item);
+            skuHasStockVo.setHasStock(count == null ? false : count > 0);
+            return skuHasStockVo;
+        }).collect(Collectors.toList());
+
+        return skuHasStockVos;
+
+    }
 
 }

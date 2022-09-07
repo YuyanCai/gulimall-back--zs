@@ -37,6 +37,7 @@ import org.springframework.util.StringUtils;
 import org.w3c.dom.Attr;
 
 import javax.annotation.Resource;
+import javax.swing.plaf.basic.BasicHTML;
 
 
 @Service("attrService")
@@ -234,7 +235,6 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         relation.deleteBatchRelation(entities);
     }
 
-
     @Override
     public PageUtils getNoRelationAttr(Map<String, Object> params, Long attrgroupId) {
 
@@ -302,5 +302,10 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         return pageUtils;
     }
 
+    @Override
+    public List<Long> selectSearchAttrs(List<Long> attrIds) {
+        List<Long> searchAttrIds = this.baseMapper.selectSearchAttrIds();
+        return searchAttrIds;
+    }
 
 }

@@ -50,7 +50,6 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
     }
 
 
-
     @Override
     public PageUtils queryUnreceivePage(Map<String, Object> params) {
         QueryWrapper<PurchaseEntity> queryWrapper = new QueryWrapper<>();
@@ -78,42 +77,67 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
     @Transactional
     @Override
     public boolean mergePurchase(MergeVo mergeVo) {
+        //一、获取Vo中的信息
+        //如果指定了采购单，那就获取采购单的id
         Long purchaseId = mergeVo.getPurchaseId();
+        //获得采购需求的id
         List<Long> items = mergeVo.getItems();
-        Long finalPurchaseId = purchaseId;
-        List<Long> collect = items.stream().filter(i -> {
-                    PurchaseDetailEntity purchaseDetailEntity = purchaseDetailService.getById(i);
-                    if (purchaseDetailEntity.getStatus() == WareConstant.PurchaseDetailStatusEnum.CREATED.getCode()
-                            || purchaseDetailEntity.getStatus() == WareConstant.PurchaseDetailStatusEnum.ASSIGNED.getCode()) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-        ).collect(Collectors.toList());
+
+        //二、过滤采购需求
+        //对采购需求id进行过滤，如果采购需求处于新建或者已分配的收集成新的集合
+        //这样做的目的是为了进行筛选，如果你选中正在采购的是不会被合并的
+        List<Long> collect = items.stream()
+                .filter(i -> {
+                    //通过采购需求的id获取采购需求实体类
+                            PurchaseDetailEntity purchaseDetailEntity = purchaseDetailService.getById(i);
+                            if (purchaseDetailEntity.getStatus() == WareConstant.PurchaseDetailStatusEnum.CREATED.getCode()
+                                    || purchaseDetailEntity.getStatus() == WareConstant.PurchaseDetailStatusEnum.ASSIGNED.getCode()) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
+                ).collect(Collectors.toList());
+
+        //三、没有指定采购单逻辑和指定了的逻辑
         if (collect != null && collect.size() > 0) {
-            //新建采购单的情况
+            //3.1如果没有指定采购单，那就自动创建一个
             if (purchaseId == null) {
                 PurchaseEntity purchaseEntity = new PurchaseEntity();
+                //如果是新创建的采购单，创建时间更新时间，状态都是没有默认值的所以这默认值我们自己来赋值
                 purchaseEntity.setCreateTime(new Date());
                 purchaseEntity.setUpdateTime(new Date());
+                //这里设置采购单的状态采用的是枚举类的形式获取
                 purchaseEntity.setStatus(WareConstant.PurchaseStatusEnum.CREATED.getCode());
                 this.save(purchaseEntity);
+                //获得自动创建的采购单id
                 purchaseId = purchaseEntity.getId();
             }
+
+            /** 3.2指定采购单了，逻辑如下
+             * 1.采购单id为Vo中获取的指定id
+             * 2.设置所有的采购需求对象并收集成对象
+             */
+            Long finalPurchaseId = purchaseId;
             List<PurchaseDetailEntity> collect1 = collect.stream().map(i -> {
+                //获取所有的采购需求对象
+                //更新采购需求的状态，一共需要该两个点，一个是采购状态，一个是采购单id。设置采购需求的id是为了区分是哪一个进行了更改
                 PurchaseDetailEntity purchaseDetailEntity = purchaseDetailService.getById(i);
                 purchaseDetailEntity.setPurchaseId(finalPurchaseId);
                 purchaseDetailEntity.setId(i);
                 purchaseDetailEntity.setStatus(WareConstant.PurchaseDetailStatusEnum.ASSIGNED.getCode());
                 return purchaseDetailEntity;
             }).collect(Collectors.toList());
+
+            //批量更改采购需求，这里是MP里的接口，可直接传入对象，MP会自动读取里面的ID
             purchaseDetailService.updateBatchById(collect1);
-            //优化时间更新
+
+            //四、优化时间更新，为了显示的时间符合我们的样式
             PurchaseEntity purchaseEntity = new PurchaseEntity();
             purchaseEntity.setId(purchaseId);
             purchaseEntity.setUpdateTime(new Date());
-            //领取采购单最终是更新操作
+
+            //五、更新采购单
             return this.updateById(purchaseEntity);
         } else {
             return false;
@@ -125,9 +149,11 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
     public void received(List<Long> ids) {
         //1.确认当前采购单状态
         List<PurchaseEntity> collect = ids.stream().map(item -> {
+            //通过采购单id获取采购单对象
             PurchaseEntity purchaseEntity = this.getById(item);
             return purchaseEntity;
         }).filter(id -> {
+            //对采购单对象进行过滤，如果状态为新建或者已分配的留下
             if (id.getStatus() == WareConstant.PurchaseStatusEnum.CREATED.getCode() ||
                     id.getStatus() == WareConstant.PurchaseStatusEnum.ASSIGNED.getCode()) {
                 return true;
@@ -135,19 +161,24 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
                 return false;
             }
         }).map(item -> {
+            //对上面收集好的在进行过滤，改变采购单状态为已领取（RECEIVE）
             item.setStatus(WareConstant.PurchaseStatusEnum.RECEIVE.getCode());
+            //对上面收集好的在进行过滤，改变采购单更新时间
             item.setUpdateTime(new Date());
             return item;
         }).collect(Collectors.toList());
-        //2.改变采购单状态
+
+        //2.批量修改改变采购单状态
         this.updateBatchById(collect);
-        //3.改变采购项目状态
+
+        //3.改变采购需求中的状态
         if (collect != null && collect.size() > 0) {
             collect.forEach(item -> {
                 List<PurchaseDetailEntity> entities = purchaseDetailService.listDetailByPurchaseId(item.getId());
                 List<PurchaseDetailEntity> detailEntities = entities.stream().map(entity -> {
                     PurchaseDetailEntity purchaseDetailEntity = new PurchaseDetailEntity();
                     purchaseDetailEntity.setId(entity.getId());
+                    //将采购需求中的状态改为正在采购
                     purchaseDetailEntity.setStatus(WareConstant.PurchaseDetailStatusEnum.BUYING.getCode());
                     return purchaseDetailEntity;
                 }).collect(Collectors.toList());
@@ -156,29 +187,46 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
         }
     }
 
+    /**
+     * 采购完成一共三地方会发生变化
+     *  1.采购单状态
+     *  2.库存增加
+     *  3.采购需求状态发生变化
+     * @param doneVo
+     */
     @Override
     public void done(PurchaseDoneVo doneVo) {
+        //获取完成的是哪一个采购单
         Long id = doneVo.getId();
-        //1.改变采购项状态
+        //一、初始化
         Boolean flag = true;
+        //获取采购单id集合
         List<PurchaseItemDoneVo> items = doneVo.getItems();
+        //收集结果
         List<PurchaseDetailEntity> updates = new ArrayList<>();
+
         for (PurchaseItemDoneVo item : items) {
             PurchaseDetailEntity purchaseDetailEntity = new PurchaseDetailEntity();
             if (item.getStatus() == WareConstant.PurchaseDetailStatusEnum.HASERROR.getCode()) {
                 flag = false;
                 purchaseDetailEntity.setStatus(item.getStatus());
             } else {
-                //2.将成功采购的进行入库
+                //二、采购需求状态发生变化
                 purchaseDetailEntity.setStatus(WareConstant.PurchaseDetailStatusEnum.FINISH.getCode());
+                //由采购单的id获取采购需求对象，有什么用呢？是用来给增加库存时赋值用的
                 PurchaseDetailEntity entity = purchaseDetailService.getById(item.getItemId());
+                //三、库存增加
                 wareSkuService.addStock(entity.getSkuId(), entity.getWareId(), entity.getSkuNum());
             }
+            //采购完成，采购需求中的状态也会发生变化，给实体类对象指明id，从而修改对象的状态
             purchaseDetailEntity.setId(item.getItemId());
+            //把要修改的采购需求对象放到集合里
             updates.add(purchaseDetailEntity);
         }
+        //因为一个采购单里有多个采购需求合并的，所以批量修改采购需求对象
         purchaseDetailService.updateBatchById(updates);
-        //3.改变采购单状态
+
+        //四.改变采购单状态
         PurchaseEntity purchaseEntity = new PurchaseEntity();
         purchaseEntity.setId(id);
         purchaseEntity.setStatus(flag ? WareConstant.PurchaseStatusEnum.FINISH.getCode() :
@@ -186,5 +234,6 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
         purchaseEntity.setUpdateTime(new Date());
         this.updateById(purchaseEntity);
     }
+
 
 }

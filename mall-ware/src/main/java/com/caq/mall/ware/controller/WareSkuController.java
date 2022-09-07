@@ -1,14 +1,13 @@
 package com.caq.mall.ware.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.caq.common.to.SkuHasStockVo;
+import com.caq.mall.ware.vo.WareSkuLockVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.caq.mall.ware.entity.WareSkuEntity;
 import com.caq.mall.ware.service.WareSkuService;
@@ -29,6 +28,20 @@ import com.caq.common.utils.R;
 public class WareSkuController {
     @Autowired
     private WareSkuService wareSkuService;
+
+    /**
+     * 查询sku是否有库存
+     * @return
+     */
+    @PostMapping(value = "/hasStock")
+    public R getSkuHasStock(@RequestBody List<Long> skuIds) {
+
+        //skuId stock
+        List<SkuHasStockVo> vos = wareSkuService.getSkuHasStock(skuIds);
+
+        return R.ok().setData(vos);
+
+    }
 
     /**
      * 列表

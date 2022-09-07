@@ -2,7 +2,9 @@ package com.caq.mall.product.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caq.common.utils.PageUtils;
+import com.caq.mall.product.entity.BrandEntity;
 import com.caq.mall.product.entity.CategoryEntity;
+import com.caq.mall.product.vo.Catelog2Vo;
 
 import java.util.List;
 import java.util.Map;
@@ -21,5 +23,9 @@ public interface CategoryService extends IService<CategoryEntity> {
     List<CategoryEntity> listWithTree();
 
     Long[] findCatelogPath(Long catelogId);
+
+    List<CategoryEntity> getLevel1Categorys();
+
+    Map<String, List<Catelog2Vo>> getCatalogJson();
 }
 

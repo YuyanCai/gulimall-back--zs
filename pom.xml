@@ -16,8 +16,6 @@
 
 
     <modules>
-        <module>mall-es</module>
-        <module>mall-third-service</module>
         <module>mall-product</module>
         <module>mall-coupon</module>
         <module>mall-member</module>
@@ -26,7 +24,6 @@
         <module>renren-fast</module>
         <module>renren-generator</module>
         <module>mall-common</module>
-        <module>mall-gateway</module>
     </modules>
 
 </project>

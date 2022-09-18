@@ -7,7 +7,7 @@ spring:
       config:
         server-addr: 127.0.0.1:8848
         namespace: 2bbd2076-36c8-44b2-9c2e-17ce5406afb7
-        file-extension: yaml
+        file-extension: yml
         extension-configs:
           - data-id: mall-third-service.yml
             group: DEFAULT_GROUP
